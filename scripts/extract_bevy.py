@@ -278,7 +278,7 @@ def write_html(all_items, output_path):
         "</head>",
         "<body>",
         '<div class="page-wrap">',
-        f"<h1>Bevy Public Unsafe APIs \u2014 </h1>",
+        f"<h1>Bevy Public Unsafe APIs </h1>",
         f"<p>Generated from workspace: <code>bevy</code>.</p>",
         "",
         "<script>",
