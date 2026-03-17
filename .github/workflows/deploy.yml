@@ -1,0 +1,50 @@
+name: Generate and Deploy Bevy Unsafe Docs
+
+on:
+  schedule:
+    # Trigger automatically once a day at midnight UTC
+    - cron: '0 0 * * *' 
+  # Allow manual triggering from the Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tool repository
+        uses: actions/checkout@v4
+
+      - name: Checkout Bevy source code (shallow clone)
+        uses: actions/checkout@v4
+        with:
+          repository: bevyengine/bevy
+          path: bevy_src
+          fetch-depth: 1
+
+      - name: Install Rust nightly toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: nightly
+         
+      - name: Install Bevy system dependencies (Linux)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y g++ pkg-config libx11-dev libasound2-dev libudev-dev libwayland-dev libxkbcommon-dev alsa-utils
+
+      - name: Extract unsafe APIs and generate HTML
+        run: |
+          mkdir -p output_docs
+          python3 scripts/extract_bevy.py --bevy-dir ./bevy_src --output ./output_docs/index.html
+
+      - name: Upload artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './output_docs'
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
