@@ -8,9 +8,12 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build-and-deploy:
@@ -38,13 +41,20 @@ jobs:
 
       - name: Extract unsafe APIs and generate HTML
         run: |
-          mkdir -p output_docs
-          python3 scripts/extract_bevy.py --bevy-dir ./bevy_src --output ./output_docs/index.html
+          mkdir -p docs
+          python3 scripts/extract_bevy.py --bevy-dir ./bevy_src --output ./docs/index.html
 
-      - name: Upload artifact for GitHub Pages
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: './output_docs'
+      - name: Commit and push docs
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git add docs/
 
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v4
+          if git diff --staged --quiet; then
+            echo "No changes detected in Bevy unsafe APIs. Skipping commit."
+          else
+            git commit -m "docs(bevy): regenerate unsafe APIs due to upstream changes [skip ci]"
+            
+            git pull --rebase origin main
+            git push
+          fi

@@ -1,7 +1,5 @@
 **/target/
 **/__pycache__/
 *.pyc
-output_docs/
-docs/
 bevy_src/
 workspace/

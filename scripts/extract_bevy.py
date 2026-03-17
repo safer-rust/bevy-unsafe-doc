@@ -22,21 +22,6 @@ def run_stream(cmd, *, cwd=None, env=None):
         print(f"ERROR: command {' '.join(cmd)} failed with exit {result.returncode}", file=sys.stderr)
         sys.exit(1)
 
-def get_rustc_version():
-    """
-    Executes a short-lived command and strictly captures its output stream.
-    Typically used to retrieve configuration or version strings.
-    """
-    result = subprocess.run(
-        ["rustc", f"+{TOOLCHAIN}", "--version"], 
-        capture_output=True, 
-        text=True
-    )
-    if result.returncode != 0:
-        print("ERROR: Failed to get rustc version.", file=sys.stderr)
-        sys.exit(1)
-    return result.stdout.strip()
-
 def generate_workspace_json(bevy_dir):
     """
     Compiles the entire Cargo workspace into rustdoc JSON format.
@@ -239,7 +224,7 @@ def collect_unsafe_items(json_path):
 
     return items
 
-def write_html(all_items, output_path, rustc_version):
+def write_html(all_items, output_path):
     """
     Generates a static HTML payload with inline CSS and JavaScript.
     Handles column resizing and local storage state management for the review checkboxes.
@@ -270,7 +255,7 @@ def write_html(all_items, output_path, rustc_version):
         "<head>",
         '<meta charset="utf-8">',
         '<meta name="viewport" content="width=device-width, initial-scale=1">',
-        f"<title>Public Unsafe APIs \u2014 {TOOLCHAIN} ({html.escape(rustc_version)})</title>",
+        f"<title>Public Unsafe APIs </title>",
         "<style>",
         "* { box-sizing: border-box; }",
         "body { margin: 0; font-family: system-ui, sans-serif; }",
@@ -293,7 +278,7 @@ def write_html(all_items, output_path, rustc_version):
         "</head>",
         "<body>",
         '<div class="page-wrap">',
-        f"<h1>Bevy Public Unsafe APIs \u2014 {TOOLCHAIN} ({html.escape(rustc_version)})</h1>",
+        f"<h1>Bevy Public Unsafe APIs </h1>",
         f"<p>Generated from workspace: <code>bevy</code>.</p>",
         "",
         "<script>",
@@ -420,7 +405,6 @@ def main():
     bevy_dir = Path(args.bevy_dir).resolve()
     output_path = Path(args.output).resolve()
 
-    rustc_version = get_rustc_version()
     json_files = generate_workspace_json(bevy_dir)
     
     all_items = []
@@ -429,7 +413,7 @@ def main():
         all_items.extend(items)
         print(f"[{json_path.stem}] Parsed {len(items)} unsafe items")
     
-    write_html(all_items, output_path, rustc_version)
+    write_html(all_items, output_path)
     print(f"\nSuccessfully generated HTML at: {output_path}")
 
 if __name__ == "__main__":
